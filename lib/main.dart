@@ -1,33 +1,95 @@
-import 'package:flutter/material.dart';            // For Flutter core widgets, State, Widget, BuildContext, Colors, Scaffold, etc.
-import 'dart:math';                                // For Random
- // For Fluttertoast
-import './random-rgb.dart';                        // Your RGB widget (or change path as needed)
-import './color_options.dart';                     // Your ColorOptions widget
-import './result.dart';                            // Your Result widget
+import 'package:flutter/material.dart';
+import 'dart:math';
 
-void main() {
-  runApp(const MyApp());
+import './random-rgb.dart';
+import './color_options.dart';
+import './result.dart';
+
+// Login Page Widget
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  String username = '';
+  String password = '';
 
+  void _tryLogin() {
+    if (_formKey.currentState!.validate()) {
+      // Here you can add actual authentication logic
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MyHomePage(title: 'Color Guessing Game'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Login')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Username'),
+                validator: (val) =>
+                    val != null && val.isNotEmpty ? null : 'Enter username',
+                onChanged: (val) => username = val,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (val) => val != null && val.length >= 6
+                    ? null
+                    : 'Password must be 6+ chars',
+                onChanged: (val) => password = val,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(onPressed: _tryLogin, child: const Text('Login')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Main entry point
+void main() {
+  runApp(const MyApp(home: LoginPage()));
+}
+
+// Main app widget accepting the home widget
+class MyApp extends StatelessWidget {
+  final Widget home;
+  const MyApp({Key? key, required this.home}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Color Guessing Game',
-      theme: ThemeData(
-        primarySwatch: Colors.blue
-      ),
-      home: const MyHomePage(title: 'Color Guessing Game'),
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: home,
     );
   }
 }
 
+// The main game page
 class MyHomePage extends StatefulWidget {
   final String title;
-
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   @override
@@ -57,36 +119,35 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void answerChooseHandler(int r, int g, int b) {
-  if (r == randomR && g == randomG && b == randomB) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Correct"),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    if (r == randomR && g == randomG && b == randomB) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Correct"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+        ),
+      );
 
-    setState(() {
-      totalScore += 1;
-      questionCount += 1;
-      generateRandomColor();
-    });
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Wrong"),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+      setState(() {
+        totalScore += 1;
+        questionCount += 1;
+        generateRandomColor();
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Wrong"),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 1),
+        ),
+      );
 
-    setState(() {
-      questionCount += 1;
-      generateRandomColor();
-    });
+      setState(() {
+        questionCount += 1;
+        generateRandomColor();
+      });
+    }
   }
-}
-
 
   void resetHandler() {
     setState(() {
@@ -99,8 +160,37 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+      appBar: AppBar(title: Text(widget.title)),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (ctx) => const LoginPage()),
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: questionCount < 10
           ? Column(
@@ -110,11 +200,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             )
           : Result(
-  score: totalScore,
-  questions: questionCount,
-  resetHandler: resetHandler,
-),
-
+              score: totalScore,
+              questions: questionCount,
+              resetHandler: resetHandler,
+            ),
     );
   }
 }
